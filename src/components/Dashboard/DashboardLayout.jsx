@@ -189,7 +189,10 @@ const DashboardLayout = () => {
                   </button>
                 </div>
               ) : (
-                <ShortenUrlList data={myShortenUrls} />
+           <ShortenUrlList
+  data={myShortenUrls}
+  onDelete={() => refetch()}
+/>
               )}
             </div>
           </div>

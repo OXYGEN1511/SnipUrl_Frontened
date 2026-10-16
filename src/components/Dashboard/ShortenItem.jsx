@@ -9,8 +9,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { useStoreContext } from "../../contextApi/ContextApi";
 import { RotatingLines } from "react-loader-spinner";
 import Graph from "./Graph";
+import { MdDeleteOutline } from "react-icons/md";
+import { toast } from "react-toastify";
 
-const ShortenItem = ({ originalUrl, shortUrl, clickCount, createdDate }) => {
+
+const ShortenItem = ({ originalUrl, shortUrl, clickCount, createdDate,onDelete }) => {
   const { token } = useStoreContext();
   const navigate = useNavigate();
   const [isCopied, setIsCopied] = useState(false);
@@ -18,12 +21,44 @@ const ShortenItem = ({ originalUrl, shortUrl, clickCount, createdDate }) => {
   const [loader, setLoader] = useState(false);
   const [selectedUrl, setSelectedUrl] = useState("");
   const [analyticsData, setAnalyticsData] = useState([]);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const frontendBase =
     import.meta.env.VITE_REACT_FRONT_END_URL || window.location.origin;
   const cleanDomain = frontendBase.replace(/^https?:\/\//, "");
   const fullShortUrl = `${frontendBase}/s/${shortUrl}`;
 
+
+
+const [deleteLoader, setDeleteLoader] = useState(false);
+
+const deleteShortUrl = async () => {
+  setDeleteLoader(true);
+
+  try {
+    await api.delete(
+      `/api/urls/${encodeURIComponent(shortUrl)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    toast.success("Short URL deleted successfully!");
+    setShowDeleteDialog(false);
+    onDelete?.(shortUrl);
+  } catch (error) {
+    console.error("Delete short URL error:", error);
+
+    toast.error(
+      error.response?.data?.message ||
+        "Failed to delete short URL."
+    );
+  } finally {
+    setDeleteLoader(false);
+  }
+};
   const analyticsHandler = (url) => {
     if (!analyticToggle) {
       setSelectedUrl(url);
@@ -130,6 +165,21 @@ const ShortenItem = ({ originalUrl, shortUrl, clickCount, createdDate }) => {
             </button>
           </CopyToClipboard>
 
+ <button
+  type="button"
+  onClick={() => setShowDeleteDialog(true)}
+  title="Delete short URL"
+  aria-label="Delete short URL"
+  className="px-3 py-2 rounded-xl flex items-center justify-center
+    border border-red-200 dark:border-red-900/60
+    bg-red-50 dark:bg-red-950/30
+    text-red-600 dark:text-red-400
+    hover:bg-red-100 dark:hover:bg-red-900/40
+    transition-colors"
+>
+  <MdDeleteOutline size={20} />
+</button>
+
           <button
             onClick={() => analyticsHandler(shortUrl)}
             className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-all duration-200 border ${
@@ -188,6 +238,105 @@ const ShortenItem = ({ originalUrl, shortUrl, clickCount, createdDate }) => {
           </div>
         </div>
       )}
+
+
+      
+{showDeleteDialog && (
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center
+      bg-black/50 backdrop-blur-sm p-4"
+    onClick={() => {
+      if (!deleteLoader) setShowDeleteDialog(false);
+    }}
+  >
+    <div
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="delete-dialog-title"
+      aria-describedby="delete-dialog-description"
+      className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900
+        border border-slate-200 dark:border-slate-700
+        shadow-2xl p-6"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="flex items-start gap-4">
+        <div className="flex h-12 w-12 shrink-0 items-center
+          justify-center rounded-full bg-red-100 dark:bg-red-950/50">
+          <MdDeleteOutline className="text-2xl text-red-600 dark:text-red-400" />
+        </div>
+
+        <div className="min-w-0">
+          <h3
+            id="delete-dialog-title"
+            className="text-lg font-bold text-slate-900 dark:text-white"
+          >
+            Delete short URL?
+          </h3>
+
+          <p
+            id="delete-dialog-description"
+            className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400"
+          >
+            Are you sure you want to delete this short link?
+            This action will make the link unavailable if the
+            backend enforces soft deletion.
+          </p>
+
+          <p className="mt-3 break-all rounded-lg bg-slate-100
+            dark:bg-slate-800 px-3 py-2 text-sm font-medium
+            text-slate-700 dark:text-slate-300">
+            {shortUrl}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-6 flex justify-end gap-3">
+        <button
+          type="button"
+          disabled={deleteLoader}
+          onClick={() => setShowDeleteDialog(false)}
+          className="rounded-xl border border-slate-300
+            dark:border-slate-700 px-4 py-2.5 text-sm font-semibold
+            text-slate-700 dark:text-slate-300
+            hover:bg-slate-100 dark:hover:bg-slate-800
+            disabled:opacity-50"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          disabled={deleteLoader}
+          onClick={deleteShortUrl}
+          className="flex items-center justify-center gap-2
+            rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold
+            text-white hover:bg-red-700
+            disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {deleteLoader ? (
+            <>
+              <RotatingLines
+                visible={true}
+                height="16"
+                width="16"
+                strokeColor="#FFFFFF"
+                strokeWidth="4"
+                animationDuration="0.75"
+              />
+              Deleting...
+            </>
+          ) : (
+            <>
+              <MdDeleteOutline size={18} />
+              Delete URL
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 };
