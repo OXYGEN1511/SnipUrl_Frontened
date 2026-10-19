@@ -35,7 +35,9 @@ const RegisterPage = () => {
       navigate("/login");
     } catch (error) {
       console.log(error);
-      toast.error("Registration failed. Please check your details and try again.");
+      toast.error(
+        "Registration failed. Please check your details and try again.",
+      );
     } finally {
       setLoader(false);
     }
@@ -50,7 +52,10 @@ const RegisterPage = () => {
         <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-3xl p-8 sm:p-10 shadow-xl shadow-blue-500/5">
           {/* Header */}
           <div className="text-center mb-8">
-            <Link to="/" className="inline-flex items-center gap-2 mb-4 group justify-center">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-2 mb-4 group justify-center"
+            >
               <Logo size="lg" showText={true} />
             </Link>
 
@@ -92,9 +97,9 @@ const RegisterPage = () => {
               id="password"
               type="password"
               message="Password is required"
-              placeholder="Minimum 6 characters"
+              placeholder="Minimum  8 characters"
               register={register}
-              min={6}
+              min={8}
               errors={errors}
             />
 
